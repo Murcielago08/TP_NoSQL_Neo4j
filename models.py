@@ -30,3 +30,35 @@ def create_comment(user_id, post_id, content):
     rel2 = Relationship(post, "HAS_COMMENT", comment)
     graph.create(comment | rel1 | rel2)
     return comment
+
+def get_all_users():
+    users = []
+    for user in graph.nodes.match("User"):
+        users.append({
+            "id": user["id"],
+            "name": user["name"],
+            "email": user["email"],
+            "created_at": user["created_at"]
+        })
+    return users
+
+def get_all_posts():
+    posts = []
+    for post in graph.nodes.match("Post"):
+        posts.append({
+            "id": post["id"],
+            "title": post["title"],
+            "content": post["content"],
+            "created_at": post["created_at"]
+        })
+    return posts
+
+def get_all_comments():
+    comments = []
+    for comment in graph.nodes.match("Comment"):
+        comments.append({
+            "id": comment["id"],
+            "content": comment["content"],
+            "created_at": comment["created_at"]
+        })
+    return comments
