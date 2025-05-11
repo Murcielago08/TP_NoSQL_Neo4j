@@ -23,6 +23,19 @@ python app.py
 
 ---
 
+### 🛑 Arrêter les serveurs  
+
+#### 1️⃣ Arrêter Neo4j  
+Dans ton terminal :  
+```bash
+docker stop neo4j
+```
+
+#### 2️⃣ Arrêter l'API Flask  
+Si l'API Flask est en cours d'exécution dans le terminal, utilise `Ctrl + C` pour l'arrêter.
+
+---
+
 ## 🔥 Tester les Routes  
 
 ### 1️⃣ Créer un utilisateur (POST /users)  
