@@ -66,8 +66,10 @@ def get_all_comments():
 def create_friendship(user_id_1, user_id_2):
     user1 = graph.nodes.match("User", id=user_id_1).first()
     user2 = graph.nodes.match("User", id=user_id_2).first()
-    if not user1 or not user2:
-        return None
+    if not user1:
+        return {"error": f"User with ID {user_id_1} not found"}
+    if not user2:
+        return {"error": f"User with ID {user_id_2} not found"}
     friendship = Relationship(user1, "FRIENDS_WITH", user2)
     graph.create(friendship)
     return friendship
@@ -75,8 +77,6 @@ def create_friendship(user_id_1, user_id_2):
 def like_post(user_id, post_id):
     user = graph.nodes.match("User", id=user_id).first()
     post = graph.nodes.match("Post", id=post_id).first()
-    if not user or not post:
-        return None
     like = Relationship(user, "LIKES", post)
     graph.create(like)
     return like
@@ -206,10 +206,16 @@ def update_comment(comment_id, content=None):
 def remove_like(user_id, target_id, target_label):
     user = graph.nodes.match("User", id=user_id).first()
     target = graph.nodes.match(target_label, id=target_id).first()
-    if not user or not target:
-        return None
+    
+    if not user:
+        return {"error": f"User with ID {user_id} not found"}
+    if not target:
+        return {"error": f"{target_label} with ID {target_id} not found"}
+    
     rel = graph.match((user, target), r_type="LIKES").first()
+    
     if rel:
         graph.separate(rel)
         return True
-    return False
+    
+    return {"error": "Like not found"}

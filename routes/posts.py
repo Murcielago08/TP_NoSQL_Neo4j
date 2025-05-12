@@ -55,17 +55,20 @@ def delete_user_post(user_id, post_id):
 @posts_bp.route('/users/<user_id>/posts', methods=['GET'])
 def get_user_posts(user_id):
     with driver.session() as session:
-        result = session.run("MATCH (u:User {id: $user_id})-[:CREATED]->(p:Post) RETURN p", user_id=user_id)
-        posts = [record["p"] for record in result]
+        result = session.run(
+            """
+            MATCH (u:User {id: $user_id})-[:CREATED]->(p:Post)
+            RETURN p, u.name AS user_name
+            """,
+            user_id=user_id
+        )
+        posts = [{"id": record["p"]["id"], 
+                  "title": record["p"]["title"], 
+                  "content": record["p"]["content"], 
+                  "created_at": record["p"]["created_at"], 
+                  "user_name": record["user_name"]} for record in result]
         if posts:
-            return jsonify({"posts": [
-                {
-                    "id": post["id"],
-                    "title": post["title"],
-                    "content": post["content"],
-                    "created_at": post["created_at"]
-                } for post in posts
-            ]}), 200
+            return jsonify({"posts": posts}), 200
         else:
             return jsonify({"error": "No posts found for this user"}), 404
 
@@ -114,16 +117,23 @@ def like_post_route(post_id):
     if not data or 'user_id' not in data:
         return jsonify({"error": "User ID is required"}), 400
     like = like_post(data['user_id'], post_id)
-    if like:
-        return jsonify({"message": "Post liked"}), 201
-    return jsonify({"error": "User or Post not found"}), 404
+    if isinstance(like, dict) and "error" in like:
+        return jsonify(like), 404
+    return jsonify({"message": "Post liked"}), 201
 
 @posts_bp.route('/posts/<post_id>/like', methods=['DELETE'])
 def remove_like_post_route(post_id):
     data = request.json
     if not data or 'user_id' not in data:
         return jsonify({"error": "User ID is required"}), 400
-    success = remove_like(data['user_id'], post_id, "Post")
-    if success:
-        return jsonify({"message": "Like removed"}), 200
-    return jsonify({"error": "Like not found"}), 404
+    user_id = data['user_id']
+    with driver.session() as session:
+        result = session.run(
+            "MATCH (u:User {id: $user_id})-[r:LIKES]->(p:Post {id: $post_id}) DELETE r RETURN COUNT(r) AS deleted_count",
+            user_id=user_id, post_id=post_id
+        )
+        deleted_count = result.single()["deleted_count"]
+        if deleted_count > 0:
+            return jsonify({"message": "Like removed"}), 200
+        return jsonify({"error": "Like not found"}), 404
+

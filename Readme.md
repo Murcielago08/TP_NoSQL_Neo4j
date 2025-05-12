@@ -168,6 +168,14 @@ MATCH (u:User {id: "<id>"}) RETURN u;
 - **Méthode** : `GET`  
 - **URL** : `http://127.0.0.1:5000/users/<id>/friends`  
 
+#### 📌 Méthode 2 : Vérifier sur Neo4j  
+1. Ouvre Neo4j sur [http://localhost:7474](http://localhost:7474)  
+2. Connecte-toi avec `neo4j / password`  
+3. Exécute cette requête Cypher :  
+```cypher
+MATCH (u:User {id: "<id>"})-[:FRIENDS_WITH]->(f:User) RETURN f;
+```
+
 ---
 
 #### 7️⃣ Ajouter un ami (POST /users/:id/friends)  
@@ -178,7 +186,7 @@ MATCH (u:User {id: "<id>"}) RETURN u;
 - **Body (JSON)** :  
 ```json
 {
-  "friend_id": "friend-id"
+  "friend_id": "5ddd1b71-f0dc-4c40-9386-5b5cadace7ac"
 }
 ```
 - **Réponse attendue (201 Created)** :  
@@ -193,7 +201,7 @@ MATCH (u:User {id: "<id>"}) RETURN u;
 2. Connecte-toi avec `neo4j / password`  
 3. Exécute cette requête Cypher :  
 ```cypher
-MATCH (u:User {id: "<id>"})-[:FRIEND]->(f:User {id: "friend-id"}) RETURN f;
+MATCH (u:User {id: "<id>"})-[:FRIENDS_WITH]->(f:User {id: "friend-id"}) RETURN f;
 ```
 👉 Tu devrais voir l'ami ajouté !
 
@@ -210,7 +218,7 @@ MATCH (u:User {id: "<id>"})-[:FRIEND]->(f:User {id: "friend-id"}) RETURN f;
 2. Connecte-toi avec `neo4j / password`  
 3. Exécute cette requête Cypher :  
 ```cypher
-MATCH (u:User {id: "<id>"})-[r:FRIEND]->(f:User {id: "<friendId>"}) DELETE r;
+MATCH (u:User {id: "<id>"})-[r:FRIENDS_WITH]->(f:User {id: "<friendId>"}) DELETE r;
 ```
 👉 La relation d'amitié devrait être supprimée !
 
@@ -227,7 +235,7 @@ MATCH (u:User {id: "<id>"})-[r:FRIEND]->(f:User {id: "<friendId>"}) DELETE r;
 2. Connecte-toi avec `neo4j / password`  
 3. Exécute cette requête Cypher :  
 ```cypher
-MATCH (u:User {id: "<id>"})-[:FRIEND]->(f:User {id: "<friendId>"}) RETURN f;
+MATCH (u:User {id: "<id>"})-[:FRIENDS_WITH]-(f:User {id: "<friendId>"}) RETURN f;
 ```
 👉 Si une relation existe, les utilisateurs sont amis !
 
@@ -257,6 +265,15 @@ MATCH (u:User {id: "<id>"})-[:FRIEND]->(m:User)<-[:FRIEND]-(o:User {id: "<otherI
 #### 📌 Méthode 1 : Tester avec Postman  
 - **Méthode** : `GET`  
 - **URL** : `http://127.0.0.1:5000/posts`  
+
+#### 📌 Méthode 2 : Vérifier sur Neo4j  
+1. Ouvre Neo4j sur [http://localhost:7474](http://localhost:7474)  
+2. Connecte-toi avec `neo4j / password`  
+3. Exécute cette requête Cypher :  
+```cypher
+MATCH (p:Post) RETURN p;
+```
+👉 Tu devrais voir la liste de tous les posts !
 
 ---
 
@@ -365,21 +382,20 @@ MATCH (p:Post {id: "abcd-efgh-ijkl"}) RETURN p;
 👉 Tu devrais voir les informations mises à jour !
 
 ---
-
-#### 6️⃣ Supprimer un post (DELETE /posts/:id)  
+#### 6️⃣ Supprimer un post (DELETE /users/:user_id/posts/:post_id)  
 
 #### 📌 Méthode 1 : Tester avec Postman  
 - **Méthode** : `DELETE`  
-- **URL** : `http://127.0.0.1:5000/posts/<id>`  
+- **URL** : `http://127.0.0.1:5000/users/<user_id>/posts/<post_id>`  
 
 #### 📌 Méthode 2 : Vérifier sur Neo4j  
 1. Ouvre Neo4j sur [http://localhost:7474](http://localhost:7474)  
 2. Connecte-toi avec `neo4j / password`  
 3. Exécute cette requête Cypher :  
 ```cypher
-MATCH (p:Post {id: "<id>"}) RETURN p;
+MATCH (u:User {id: "<user_id>"})-[:CREATED]->(p:Post {id: "<post_id>"}) RETURN p;
 ```
-👉 Le post ne devrait plus exister !
+👉 Le post ne devrait plus exister pour cet utilisateur !
 
 ---
 
@@ -438,6 +454,23 @@ MATCH (u:User {id: "1234-5678-abcd"})-[:LIKES]->(p:Post {id: "<id>"}) RETURN p;
 MATCH (u:User {id: "1234-5678-abcd"})-[r:LIKES]->(p:Post {id: "<id>"}) DELETE r;
 ```
 👉 La relation de like devrait être supprimée !
+
+---
+
+#### 9️⃣ Get likes for a post (GET /posts/:id/likes)  
+
+#### 📌 Method 1: Test with Postman  
+- **Method**: `GET`  
+- **URL**: `http://127.0.0.1:5000/posts/<id>/likes`  
+
+#### 📌 Method 2: Verify on Neo4j  
+1. Open Neo4j at [http://localhost:7474](http://localhost:7474).  
+2. Log in with `neo4j / password`.  
+3. Run this Cypher query:  
+```cypher
+MATCH (u:User)-[:LIKES]->(p:Post {id: "<id>"}) RETURN u;
+```
+👉 You should see the users who liked the post!
 
 ---
 
@@ -655,6 +688,36 @@ MATCH (u:User {id: "1234-5678-abcd"})-[r:LIKES]->(c:Comment {id: "<id>"}) DELETE
 
 ---
 
+#### 🔟 Récupérer les likes d'un commentaire (GET /comments/:id/likes)  
+
+#### 📌 Méthode 1 : Tester avec Postman  
+- **Méthode** : `GET`  
+- **URL** : `http://127.0.0.1:5000/comments/<id>/likes`  
+
+#### 📌 Méthode 2 : Vérifier sur Neo4j  
+1. Ouvre Neo4j sur [http://localhost:7474](http://localhost:7474).  
+2. Connecte-toi avec `neo4j / password`.  
+3. Exécute cette requête Cypher :  
+```cypher
+MATCH (u:User)-[:LIKES]->(c:Comment {id: "<id>"}) RETURN u;
+```
+👉 Tu devrais voir les utilisateurs qui ont liké le commentaire !
+
+#### 📌 Method 1: Test with Postman  
+- **Method**: `GET`  
+- **URL**: `http://127.0.0.1:5000/comments/<id>/likes`  
+
+#### 📌 Method 2: Verify on Neo4j  
+1. Open Neo4j at [http://localhost:7474](http://localhost:7474).  
+2. Log in with `neo4j / password`.  
+3. Run this Cypher query:  
+```cypher
+MATCH (u:User)-[:LIKES]->(c:Comment {id: "<id>"}) RETURN u;
+```
+👉 You should see the users who liked the comment!
+
+---
+
 ## 🛠️ Comment tester les routes avec Postman  
 
 1. **Installer Postman**  
@@ -696,9 +759,9 @@ MATCH (u:User {id: "1234-5678-abcd"})-[r:LIKES]->(c:Comment {id: "<id>"}) DELETE
 | Mettre à jour un utilisateur par son ID | PUT    | `/users/<id>`                   | `MATCH (u:User {id: "1234-5678-abcd"}) RETURN u;` |
 | Supprimer un utilisateur par son ID | DELETE  | `/users/<id>`                   | `MATCH (u:User {id: "<id>"}) RETURN u;` |
 | Récupérer la liste des amis d'un utilisateur | GET    | `/users/<id>/friends`           | `MATCH (u:User {id: "<id>"})-[:FRIEND]->(f:User) RETURN f;` |
-| Ajouter un ami          | POST    | `/users/<id>/friends`            | `MATCH (u:User {id: "<id>"})-[:FRIEND]->(f:User {id: "friend-id"}) RETURN f;` |
-| Supprimer un ami        | DELETE  | `/users/<id>/friends/<friendId>` | `MATCH (u:User {id: "<id>"})-[r:FRIEND]->(f:User {id: "<friendId>"}) DELETE r;` |
-| Vérifier si deux utilisateurs sont amis | GET    | `/users/<id>/friends/<friendId>` | `MATCH (u:User {id: "<id>"})-[:FRIEND]->(f:User {id: "<friendId>"}) RETURN f;` |
+| Ajouter un ami          | POST    | `/users/<id>/friends`            | `MATCH (u:User {id: "<id>"})-[:FRIENDS_WITH]->(f:User {id: "friend-id"}) RETURN f;` |
+| Supprimer un ami        | DELETE  | `/users/<id>/friends/<friendId>` | `MATCH (u:User {id: "<id>"})-[r:FRIENDS_WITH]->(f:User {id: "<friendId>"}) DELETE r;` |
+| Vérifier si deux utilisateurs sont amis | GET    | `/users/<id>/friends/<friendId>` | `MATCH (u:User {id: "<id>"})-[:FRIEND]-(f:User {id: "<friendId>"}) RETURN f;` |
 | Récupérer les amis en commun | GET    | `/users/<id>/mutual-friends/<otherId>` | `MATCH (u:User {id: "<id>"})-[:FRIEND]->(m:User)<-[:FRIEND]-(o:User {id: "<otherId>"}) RETURN m;` |
 | Créer un post           | POST    | `/users/<user_id>/posts`         | `MATCH (p:Post) RETURN p;`     |
 | Ajouter un commentaire  | POST    | `/posts/<post_id>/comments`      | `MATCH (c:Comment) RETURN c;`  |

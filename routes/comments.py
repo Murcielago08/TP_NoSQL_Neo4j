@@ -71,33 +71,42 @@ def like_comment_route(comment_id):
     if not data or 'user_id' not in data:
         return jsonify({"error": "User ID is required"}), 400
     like = like_comment(data['user_id'], comment_id)
-    if like:
-        return jsonify({"message": "Comment liked"}), 201
-    return jsonify({"error": "User or Comment not found"}), 404
+    if isinstance(like, dict) and "error" in like:
+        return jsonify(like), 404
+    return jsonify({"message": "Comment liked"}), 201
 
 @comments_bp.route('/comments/<comment_id>/like', methods=['DELETE'])
 def remove_like_comment_route(comment_id):
     data = request.json
     if not data or 'user_id' not in data:
         return jsonify({"error": "User ID is required"}), 400
-    success = remove_like(data['user_id'], comment_id, "Comment")
-    if success:
-        return jsonify({"message": "Like removed"}), 200
-    return jsonify({"error": "Like not found"}), 404
+    user_id = data['user_id']
+    with driver.session() as session:
+        result = session.run(
+            "MATCH (u:User {id: $user_id})-[r:LIKES]->(c:Comment {id: $comment_id}) DELETE r RETURN COUNT(r) AS deleted_count",
+            user_id=user_id, comment_id=comment_id
+        )
+        deleted_count = result.single()["deleted_count"]
+        if deleted_count > 0:
+            return jsonify({"message": "Like removed"}), 200
+        return jsonify({"error": "Like not found"}), 404
 
 @comments_bp.route('/posts/<post_id>/comments', methods=['GET'])
 def get_post_comments(post_id):
     with driver.session() as session:
-        result = session.run("MATCH (p:Post {id: $post_id})-[:HAS_COMMENT]->(c:Comment) RETURN c", post_id=post_id)
-        comments = [record["c"] for record in result]
+        result = session.run(
+            """
+            MATCH (p:Post {id: $post_id})-[:HAS_COMMENT]->(c:Comment)<-[:CREATED]-(u:User)
+            RETURN c, u.name AS user_name
+            """,
+            post_id=post_id
+        )
+        comments = [{"id": record["c"]["id"], 
+                     "content": record["c"]["content"], 
+                     "created_at": record["c"]["created_at"], 
+                     "user_name": record["user_name"]} for record in result]
         if comments:
-            return jsonify({"comments": [
-                {
-                    "id": comment["id"],
-                    "content": comment["content"],
-                    "created_at": comment["created_at"]
-                } for comment in comments
-            ]}), 200
+            return jsonify({"comments": comments}), 200
         else:
             return jsonify({"error": "No comments found for this post"}), 404
 

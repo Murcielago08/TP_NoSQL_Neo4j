@@ -72,19 +72,24 @@ def get_user_friends_route(user_id):
 @users_bp.route('/users/<user_id>/friends', methods=['POST'])
 def add_friend_route(user_id):
     data = request.json
-    if not data or 'friend_id' not in data:
+    if not data or 'friend_id' not in data or not data['friend_id']:
         return jsonify({"error": "Friend ID is required"}), 400
     friendship = add_friend(user_id, data['friend_id'])
-    if friendship:
-        return jsonify({"message": "Friend added"}), 201
-    return jsonify({"error": "User or Friend not found"}), 404
+    if isinstance(friendship, dict) and "error" in friendship:
+        return jsonify(friendship), 404
+    return jsonify({"message": "Friend added"}), 201
 
 @users_bp.route('/users/<user_id>/friends/<friend_id>', methods=['DELETE'])
 def remove_friend_route(user_id, friend_id):
-    success = remove_friend(user_id, friend_id)
-    if success:
-        return jsonify({"message": "Friend removed"}), 200
-    return jsonify({"error": "Friendship not found"}), 404
+    with driver.session() as session:
+        result = session.run(
+            "MATCH (u:User {id: $user_id})-[r:FRIENDS_WITH]-(f:User {id: $friend_id}) DELETE r RETURN COUNT(r) AS deleted_count",
+            user_id=user_id, friend_id=friend_id
+        )
+        deleted_count = result.single()["deleted_count"]
+        if deleted_count > 0:
+            return jsonify({"message": "Friend removed"}), 200
+        return jsonify({"error": "Friendship not found"}), 404
 
 @users_bp.route('/users/<user_id>/friends/<friend_id>', methods=['GET'])
 def are_friends_route(user_id, friend_id):
