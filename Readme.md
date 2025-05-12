@@ -2,20 +2,28 @@
 
 ## 📌 Installation  
 
-### 1️⃣ Installer les dépendances  
+### 1️⃣ Create python virtual environment
+```bash
+python -m venv nosql
+```
+
+# On Windows
+nosql\Scripts\activate
+
+### 2️⃣ Installer les dépendances  
 Dans ton terminal :  
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2️⃣ Lancer Neo4j avec Docker  
+### 3️⃣ Lancer Neo4j avec Docker  
 ```bash
 docker run --name neo4j -d -p 7474:7474 -p 7687:7687 -e NEO4J_AUTH=neo4j/password neo4j
 ```
 👉 Neo4j sera disponible sur : [http://localhost:7474](http://localhost:7474)  
 ⚠️ Identifiants par défaut : `neo4j / password` (à remplacer si besoin)
 
-### 3️⃣ Démarrer l'API Flask  
+### 4️⃣ Démarrer l'API Flask  
 ```bash
 python app.py
 ```

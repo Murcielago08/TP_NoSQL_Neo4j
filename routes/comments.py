@@ -20,6 +20,8 @@ def get_comments():
 
 @comments_bp.route('/comments/<comment_id>', methods=['GET'])
 def get_comment(comment_id):
+    if not comment_id:
+        return jsonify({"error": "Comment ID is required"}), 400
     with driver.session() as session:
         result = session.run("MATCH (c:Comment {id: $comment_id}) RETURN c", comment_id=comment_id)
         comment = result.single()
@@ -35,6 +37,8 @@ def get_comment(comment_id):
 
 @comments_bp.route('/comments/<comment_id>', methods=['DELETE'])
 def delete_comment(comment_id):
+    if not comment_id:
+        return jsonify({"error": "Comment ID is required"}), 400
     with driver.session() as session:
         result = session.run("MATCH (c:Comment {id: $comment_id}) DETACH DELETE c RETURN c", comment_id=comment_id)
         if result.consume().counters.nodes_deleted > 0:
