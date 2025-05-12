@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from models import create_user, get_all_users  # Import get_all_users
+from models import create_user, get_all_users, update_user, get_user_friends, add_friend, remove_friend, are_friends, get_mutual_friends  # Import get_all_users, update_user, get_user_friends, add_friend, remove_friend, are_friends, get_mutual_friends
 from neo4j import GraphDatabase
 
 users_bp = Blueprint('users', __name__)
@@ -46,3 +46,52 @@ def delete_user(user_id):
             return jsonify({"message": "User deleted"}), 200
         else:
             return jsonify({"error": "User not found"}), 404
+
+@users_bp.route('/users/<user_id>', methods=['PUT'])
+def update_user_route(user_id):
+    data = request.json
+    if not data:
+        return jsonify({"error": "Invalid input"}), 400
+    user = update_user(user_id, name=data.get('name'), email=data.get('email'))
+    if user:
+        return jsonify({"message": "User updated", "user": {
+            "id": user["id"],
+            "name": user["name"],
+            "email": user["email"],
+            "created_at": user["created_at"]
+        }}), 200
+    return jsonify({"error": "User not found"}), 404
+
+@users_bp.route('/users/<user_id>/friends', methods=['GET'])
+def get_user_friends_route(user_id):
+    friends = get_user_friends(user_id)
+    if friends is not None:
+        return jsonify({"friends": friends}), 200
+    return jsonify({"error": "User not found"}), 404
+
+@users_bp.route('/users/<user_id>/friends', methods=['POST'])
+def add_friend_route(user_id):
+    data = request.json
+    if not data or 'friend_id' not in data:
+        return jsonify({"error": "Friend ID is required"}), 400
+    friendship = add_friend(user_id, data['friend_id'])
+    if friendship:
+        return jsonify({"message": "Friend added"}), 201
+    return jsonify({"error": "User or Friend not found"}), 404
+
+@users_bp.route('/users/<user_id>/friends/<friend_id>', methods=['DELETE'])
+def remove_friend_route(user_id, friend_id):
+    success = remove_friend(user_id, friend_id)
+    if success:
+        return jsonify({"message": "Friend removed"}), 200
+    return jsonify({"error": "Friendship not found"}), 404
+
+@users_bp.route('/users/<user_id>/friends/<friend_id>', methods=['GET'])
+def are_friends_route(user_id, friend_id):
+    are_friends_result = are_friends(user_id, friend_id)
+    return jsonify({"are_friends": are_friends_result}), 200
+
+@users_bp.route('/users/<user_id>/mutual-friends/<other_id>', methods=['GET'])
+def get_mutual_friends_route(user_id, other_id):
+    mutual_friends = get_mutual_friends(user_id, other_id)
+    return jsonify({"mutual_friends": mutual_friends}), 200

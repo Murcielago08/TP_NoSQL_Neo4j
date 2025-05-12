@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from models import create_post, get_all_posts  # Import get_all_posts
+from models import create_post, get_all_posts, get_post_likes, update_post, like_post, remove_like  # Import get_all_posts, get_post_likes, update_post, like_post, remove_like
 from neo4j import GraphDatabase
 
 posts_bp = Blueprint('posts', __name__)
@@ -87,3 +87,43 @@ def get_user_post(user_id, post_id):
             }), 200
         else:
             return jsonify({"error": "Post not found for this user"}), 404
+
+@posts_bp.route('/posts/<post_id>/likes', methods=['GET'])
+def get_post_likes_route(post_id):
+    likes = get_post_likes(post_id)
+    if likes is not None:
+        return jsonify({"likes": likes}), 200
+    return jsonify({"error": "Post not found"}), 404
+
+@posts_bp.route('/posts/<post_id>', methods=['PUT'])
+def update_post_route(post_id):
+    data = request.json
+    post = update_post(post_id, title=data.get("title"), content=data.get("content"))
+    if post:
+        return jsonify({"message": "Post updated", "post": {
+            "id": post["id"],
+            "title": post["title"],
+            "content": post["content"],
+            "created_at": post["created_at"]
+        }}), 200
+    return jsonify({"error": "Post not found"}), 404
+
+@posts_bp.route('/posts/<post_id>/like', methods=['POST'])
+def like_post_route(post_id):
+    data = request.json
+    if not data or 'user_id' not in data:
+        return jsonify({"error": "User ID is required"}), 400
+    like = like_post(data['user_id'], post_id)
+    if like:
+        return jsonify({"message": "Post liked"}), 201
+    return jsonify({"error": "User or Post not found"}), 404
+
+@posts_bp.route('/posts/<post_id>/like', methods=['DELETE'])
+def remove_like_post_route(post_id):
+    data = request.json
+    if not data or 'user_id' not in data:
+        return jsonify({"error": "User ID is required"}), 400
+    success = remove_like(data['user_id'], post_id, "Post")
+    if success:
+        return jsonify({"message": "Like removed"}), 200
+    return jsonify({"error": "Like not found"}), 404

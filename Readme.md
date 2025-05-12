@@ -46,7 +46,17 @@ Si l'API Flask est en cours d'exécution dans le terminal, utilise `Ctrl + C` po
 
 ## 🔥 Tester les Routes  
 
-### 1️⃣ Créer un utilisateur (POST /users)  
+### Routes pour les utilisateurs  
+
+#### 1️⃣ Récupérer la liste des utilisateurs (GET /users)  
+
+#### 📌 Méthode 1 : Tester avec Postman  
+- **Méthode** : `GET`  
+- **URL** : `http://127.0.0.1:5000/users`  
+
+---
+
+#### 2️⃣ Créer un utilisateur (POST /users)  
 
 #### 📌 Méthode 1 : Tester avec Postman  
 - **Méthode** : `POST`  
@@ -82,11 +92,213 @@ MATCH (u:User) RETURN u;
 
 ---
 
-### 2️⃣ Créer un post (POST /users/<user_id>/posts)  
+#### 3️⃣ Récupérer un utilisateur par son ID (GET /users/:id)  
 
-#### 📌 Tester avec Postman  
+#### 📌 Méthode 1 : Tester avec Postman  
+- **Méthode** : `GET`  
+- **URL** : `http://127.0.0.1:5000/users/<id>`  
+
+#### 📌 Méthode 2 : Vérifier sur Neo4j  
+1. Ouvre Neo4j sur [http://localhost:7474](http://localhost:7474)  
+2. Connecte-toi avec `neo4j / password`  
+3. Exécute cette requête Cypher :  
+```cypher
+MATCH (u:User {id: "<id>"}) RETURN u;
+```
+👉 Tu devrais voir l'utilisateur correspondant !
+
+---
+
+#### 4️⃣ Mettre à jour un utilisateur par son ID (PUT /users/:id)  
+
+#### 📌 Méthode 1 : Tester avec Postman  
+- **Méthode** : `PUT`  
+- **URL** : `http://127.0.0.1:5000/users/<id>`  
+- **Body (JSON)** :  
+```json
+{
+  "name": "Alice Updated",
+  "email": "alice.updated@example.com"
+}
+```
+- **Réponse attendue (200 OK)** :  
+```json
+{
+  "message": "User updated",
+  "user": {
+    "id": "1234-5678-abcd",
+    "name": "Alice Updated",
+    "email": "alice.updated@example.com",
+    "updated_at": "2025-03-31T12:30:00"
+  }
+}
+```
+
+#### 📌 Méthode 2 : Vérifier sur Neo4j  
+1. Ouvre Neo4j sur [http://localhost:7474](http://localhost:7474)  
+2. Connecte-toi avec `neo4j / password`  
+3. Exécute cette requête Cypher :  
+```cypher
+MATCH (u:User {id: "1234-5678-abcd"}) RETURN u;
+```
+👉 Tu devrais voir les informations mises à jour !
+
+---
+
+#### 5️⃣ Supprimer un utilisateur par son ID (DELETE /users/:id)  
+
+#### 📌 Méthode 1 : Tester avec Postman  
+- **Méthode** : `DELETE`  
+- **URL** : `http://127.0.0.1:5000/users/<id>`  
+
+#### 📌 Méthode 2 : Vérifier sur Neo4j  
+1. Ouvre Neo4j sur [http://localhost:7474](http://localhost:7474)  
+2. Connecte-toi avec `neo4j / password`  
+3. Exécute cette requête Cypher :  
+```cypher
+MATCH (u:User {id: "<id>"}) RETURN u;
+```
+👉 L'utilisateur ne devrait plus exister !
+
+---
+
+#### 6️⃣ Récupérer la liste des amis d'un utilisateur (GET /users/:id/friends)  
+
+#### 📌 Méthode 1 : Tester avec Postman  
+- **Méthode** : `GET`  
+- **URL** : `http://127.0.0.1:5000/users/<id>/friends`  
+
+---
+
+#### 7️⃣ Ajouter un ami (POST /users/:id/friends)  
+
+#### 📌 Méthode 1 : Tester avec Postman  
 - **Méthode** : `POST`  
-- **URL** : `http://127.0.0.1:5000/users/1234-5678-abcd/posts`  
+- **URL** : `http://127.0.0.1:5000/users/<id>/friends`  
+- **Body (JSON)** :  
+```json
+{
+  "friend_id": "friend-id"
+}
+```
+- **Réponse attendue (201 Created)** :  
+```json
+{
+  "message": "Friend added"
+}
+```
+
+#### 📌 Méthode 2 : Vérifier sur Neo4j  
+1. Ouvre Neo4j sur [http://localhost:7474](http://localhost:7474)  
+2. Connecte-toi avec `neo4j / password`  
+3. Exécute cette requête Cypher :  
+```cypher
+MATCH (u:User {id: "<id>"})-[:FRIEND]->(f:User {id: "friend-id"}) RETURN f;
+```
+👉 Tu devrais voir l'ami ajouté !
+
+---
+
+#### 8️⃣ Supprimer un ami (DELETE /users/:id/friends/:friendId)  
+
+#### 📌 Méthode 1 : Tester avec Postman  
+- **Méthode** : `DELETE`  
+- **URL** : `http://127.0.0.1:5000/users/<id>/friends/<friendId>`  
+
+#### 📌 Méthode 2 : Vérifier sur Neo4j  
+1. Ouvre Neo4j sur [http://localhost:7474](http://localhost:7474)  
+2. Connecte-toi avec `neo4j / password`  
+3. Exécute cette requête Cypher :  
+```cypher
+MATCH (u:User {id: "<id>"})-[r:FRIEND]->(f:User {id: "<friendId>"}) DELETE r;
+```
+👉 La relation d'amitié devrait être supprimée !
+
+---
+
+#### 9️⃣ Vérifier si deux utilisateurs sont amis (GET /users/:id/friends/:friendId)  
+
+#### 📌 Méthode 1 : Tester avec Postman  
+- **Méthode** : `GET`  
+- **URL** : `http://127.0.0.1:5000/users/<id>/friends/<friendId>`  
+
+#### 📌 Méthode 2 : Vérifier sur Neo4j  
+1. Ouvre Neo4j sur [http://localhost:7474](http://localhost:7474)  
+2. Connecte-toi avec `neo4j / password`  
+3. Exécute cette requête Cypher :  
+```cypher
+MATCH (u:User {id: "<id>"})-[:FRIEND]->(f:User {id: "<friendId>"}) RETURN f;
+```
+👉 Si une relation existe, les utilisateurs sont amis !
+
+---
+
+#### 🔟 Récupérer les amis en commun (GET /users/:id/mutual-friends/:otherId)  
+
+#### 📌 Méthode 1 : Tester avec Postman  
+- **Méthode** : `GET`  
+- **URL** : `http://127.0.0.1:5000/users/<id>/mutual-friends/<otherId>`  
+
+#### 📌 Méthode 2 : Vérifier sur Neo4j  
+1. Ouvre Neo4j sur [http://localhost:7474](http://localhost:7474)  
+2. Connecte-toi avec `neo4j / password`  
+3. Exécute cette requête Cypher :  
+```cypher
+MATCH (u:User {id: "<id>"})-[:FRIEND]->(m:User)<-[:FRIEND]-(o:User {id: "<otherId>"}) RETURN m;
+```
+👉 Tu devrais voir les amis en commun !
+
+---
+
+### Routes pour les posts  
+
+#### 1️⃣ Récupérer tous les posts (GET /posts)  
+
+#### 📌 Méthode 1 : Tester avec Postman  
+- **Méthode** : `GET`  
+- **URL** : `http://127.0.0.1:5000/posts`  
+
+---
+
+#### 2️⃣ Récupérer un post par son ID (GET /posts/:id)  
+
+#### 📌 Méthode 1 : Tester avec Postman  
+- **Méthode** : `GET`  
+- **URL** : `http://127.0.0.1:5000/posts/<id>`  
+
+#### 📌 Méthode 2 : Vérifier sur Neo4j  
+1. Ouvre Neo4j sur [http://localhost:7474](http://localhost:7474)  
+2. Connecte-toi avec `neo4j / password`  
+3. Exécute cette requête Cypher :  
+```cypher
+MATCH (p:Post {id: "<id>"}) RETURN p;
+```
+👉 Tu devrais voir le post correspondant !
+
+---
+
+#### 3️⃣ Récupérer les posts d'un utilisateur (GET /users/:id/posts)  
+
+#### 📌 Méthode 1 : Tester avec Postman  
+- **Méthode** : `GET`  
+- **URL** : `http://127.0.0.1:5000/users/<id>/posts`  
+
+#### 📌 Méthode 2 : Vérifier sur Neo4j  
+1. Ouvre Neo4j sur [http://localhost:7474](http://localhost:7474)  
+2. Connecte-toi avec `neo4j / password`  
+3. Exécute cette requête Cypher :  
+```cypher
+MATCH (u:User {id: "<id>"})-[:CREATED]->(p:Post) RETURN p;
+```
+👉 Tu devrais voir les posts créés par l'utilisateur !
+
+---
+
+#### 4️⃣ Créer un post (POST /users/:id/posts)  
+
+#### 📌 Méthode 1 : Tester avec Postman  
+- **Méthode** : `POST`  
+- **URL** : `http://127.0.0.1:5000/users/<id>/posts`  
 - **Body (JSON)** :  
 ```json
 {
@@ -107,20 +319,152 @@ MATCH (u:User) RETURN u;
 }
 ```
 
-#### 📌 Vérifier sur Neo4j  
-Exécute dans Neo4j :  
+#### 📌 Méthode 2 : Vérifier sur Neo4j  
+1. Ouvre Neo4j sur [http://localhost:7474](http://localhost:7474)  
+2. Connecte-toi avec `neo4j / password`  
+3. Exécute cette requête Cypher :  
 ```cypher
-MATCH (p:Post) RETURN p;
+MATCH (u:User {id: "<id>"})-[:CREATED]->(p:Post {id: "abcd-efgh-ijkl"}) RETURN p;
 ```
-👉 Tu devrais voir le post créé !
+👉 Tu devrais voir le post lié à son créateur !
 
 ---
 
-### 3️⃣ Ajouter un commentaire (POST /posts/<post_id>/comments)  
+#### 5️⃣ Mettre à jour un post (PUT /posts/:id)  
 
-#### 📌 Tester avec Postman  
+#### 📌 Méthode 1 : Tester avec Postman  
+- **Méthode** : `PUT`  
+- **URL** : `http://127.0.0.1:5000/posts/<id>`  
+- **Body (JSON)** :  
+```json
+{
+  "title": "Titre mis à jour",
+  "content": "Contenu mis à jour"
+}
+```
+- **Réponse attendue (200 OK)** :  
+```json
+{
+  "message": "Post updated",
+  "post": {
+    "id": "abcd-efgh-ijkl",
+    "title": "Titre mis à jour",
+    "content": "Contenu mis à jour",
+    "updated_at": "2025-03-31T12:30:00"
+  }
+}
+```
+
+#### 📌 Méthode 2 : Vérifier sur Neo4j  
+1. Ouvre Neo4j sur [http://localhost:7474](http://localhost:7474)  
+2. Connecte-toi avec `neo4j / password`  
+3. Exécute cette requête Cypher :  
+```cypher
+MATCH (p:Post {id: "abcd-efgh-ijkl"}) RETURN p;
+```
+👉 Tu devrais voir les informations mises à jour !
+
+---
+
+#### 6️⃣ Supprimer un post (DELETE /posts/:id)  
+
+#### 📌 Méthode 1 : Tester avec Postman  
+- **Méthode** : `DELETE`  
+- **URL** : `http://127.0.0.1:5000/posts/<id>`  
+
+#### 📌 Méthode 2 : Vérifier sur Neo4j  
+1. Ouvre Neo4j sur [http://localhost:7474](http://localhost:7474)  
+2. Connecte-toi avec `neo4j / password`  
+3. Exécute cette requête Cypher :  
+```cypher
+MATCH (p:Post {id: "<id>"}) RETURN p;
+```
+👉 Le post ne devrait plus exister !
+
+---
+
+#### 7️⃣ Ajouter un like à un post (POST /posts/:id/like)  
+
+#### 📌 Méthode 1 : Tester avec Postman  
 - **Méthode** : `POST`  
-- **URL** : `http://127.0.0.1:5000/posts/abcd-efgh-ijkl/comments`  
+- **URL** : `http://127.0.0.1:5000/posts/<id>/like`  
+- **Body (JSON)** :  
+```json
+{
+  "user_id": "1234-5678-abcd"
+}
+```
+- **Réponse attendue (201 Created)** :  
+```json
+{
+  "message": "Like added"
+}
+```
+
+#### 📌 Méthode 2 : Vérifier sur Neo4j  
+1. Ouvre Neo4j sur [http://localhost:7474](http://localhost:7474)  
+2. Connecte-toi avec `neo4j / password`  
+3. Exécute cette requête Cypher :  
+```cypher
+MATCH (u:User {id: "1234-5678-abcd"})-[:LIKES]->(p:Post {id: "<id>"}) RETURN p;
+```
+👉 Tu devrais voir la relation de like ajoutée !
+
+---
+
+#### 8️⃣ Retirer un like d'un post (DELETE /posts/:id/like)  
+
+#### 📌 Méthode 1 : Tester avec Postman  
+- **Méthode** : `DELETE`  
+- **URL** : `http://127.0.0.1:5000/posts/<id>/like`  
+- **Body (JSON)** :  
+```json
+{
+  "user_id": "1234-5678-abcd"
+}
+```
+- **Réponse attendue (200 OK)** :  
+```json
+{
+  "message": "Like removed"
+}
+```
+
+#### 📌 Méthode 2 : Vérifier sur Neo4j  
+1. Ouvre Neo4j sur [http://localhost:7474](http://localhost:7474)  
+2. Connecte-toi avec `neo4j / password`  
+3. Exécute cette requête Cypher :  
+```cypher
+MATCH (u:User {id: "1234-5678-abcd"})-[r:LIKES]->(p:Post {id: "<id>"}) DELETE r;
+```
+👉 La relation de like devrait être supprimée !
+
+---
+
+### Routes pour les commentaires  
+
+#### 1️⃣ Récupérer les commentaires d'un post (GET /posts/:id/comments)  
+
+#### 📌 Méthode 1 : Tester avec Postman  
+- **Méthode** : `GET`  
+- **URL** : `http://127.0.0.1:5000/posts/<id>/comments`  
+
+#### 📌 Méthode 2 : Vérifier sur Neo4j  
+1. Ouvre Neo4j sur [http://localhost:7474](http://localhost:7474)  
+2. Connecte-toi avec `neo4j / password`  
+3. Exécute cette requête Cypher :  
+```cypher
+MATCH (p:Post {id: "<id>"})-[:HAS_COMMENT]->(c:Comment) RETURN c;
+```
+👉 Tu devrais voir les commentaires liés au post !
+
+---
+
+#### 2️⃣ Ajouter un commentaire (POST /posts/:id/comments)  
+
+#### 📌 Méthode 1 : Tester avec Postman  
+- **Méthode** : `POST`  
+- **URL** : `http://127.0.0.1:5000/posts/<id>/comments`  
 - **Body (JSON)** :  
 ```json
 {
@@ -140,77 +484,174 @@ MATCH (p:Post) RETURN p;
 }
 ```
 
-#### 📌 Vérifier sur Neo4j  
-Exécute dans Neo4j :  
+#### 📌 Méthode 2 : Vérifier sur Neo4j  
+1. Ouvre Neo4j sur [http://localhost:7474](http://localhost:7474)  
+2. Connecte-toi avec `neo4j / password`  
+3. Exécute cette requête Cypher :  
+```cypher
+MATCH (u:User {id: "1234-5678-abcd"})-[:CREATED]->(c:Comment {id: "wxyz-1234"})<-[:HAS_COMMENT]-(p:Post {id: "<id>"}) RETURN c;
+```
+👉 Tu devrais voir le commentaire lié à l'utilisateur et au post !
+
+---
+
+#### 3️⃣ Supprimer un commentaire (DELETE /posts/:postId/comments/:commentId)  
+
+#### 📌 Méthode 1 : Tester avec Postman  
+- **Méthode** : `DELETE`  
+- **URL** : `http://127.0.0.1:5000/posts/<postId>/comments/<commentId>`  
+
+#### 📌 Méthode 2 : Vérifier sur Neo4j  
+1. Ouvre Neo4j sur [http://localhost:7474](http://localhost:7474)  
+2. Connecte-toi avec `neo4j / password`  
+3. Exécute cette requête Cypher :  
+```cypher
+MATCH (p:Post {id: "<postId>"})-[r:HAS_COMMENT]->(c:Comment {id: "<commentId>"}) DELETE r, c;
+```
+👉 Le commentaire et sa relation avec le post devraient être supprimés !
+
+---
+
+#### 4️⃣ Récupérer tous les commentaires (GET /comments)  
+
+#### 📌 Méthode 1 : Tester avec Postman  
+- **Méthode** : `GET`  
+- **URL** : `http://127.0.0.1:5000/comments`  
+
+#### 📌 Méthode 2 : Vérifier sur Neo4j  
+1. Ouvre Neo4j sur [http://localhost:7474](http://localhost:7474)  
+2. Connecte-toi avec `neo4j / password`  
+3. Exécute cette requête Cypher :  
 ```cypher
 MATCH (c:Comment) RETURN c;
 ```
-👉 Tu devrais voir le commentaire !
+👉 Tu devrais voir tous les commentaires !
 
 ---
 
-### 4️⃣ Supprimer un utilisateur (DELETE /users/<user_id>)  
+#### 5️⃣ Récupérer un commentaire par son ID (GET /comments/:id)  
 
-#### 📌 Tester avec Postman  
-- **Méthode** : `DELETE`  
-- **URL** : `http://127.0.0.1:5000/users/<user_id>`  
-  👉 Remplace `<user_id>` par l'identifiant réel de l'utilisateur, par exemple :  
-  `http://127.0.0.1:5000/users/b13ebbb0-e5ec-4cac-942a-5ad84c76a35c`
-- **Réponse attendue (200 OK)** :  
-```json
-{
-  "message": "User deleted"
-}
-```
+#### 📌 Méthode 1 : Tester avec Postman  
+- **Méthode** : `GET`  
+- **URL** : `http://127.0.0.1:5000/comments/<id>`  
 
-#### 📌 Vérifier sur Neo4j  
-Exécute dans Neo4j :  
+#### 📌 Méthode 2 : Vérifier sur Neo4j  
+1. Ouvre Neo4j sur [http://localhost:7474](http://localhost:7474)  
+2. Connecte-toi avec `neo4j / password`  
+3. Exécute cette requête Cypher :  
 ```cypher
-MATCH (u:User {id: "1234-5678-abcd"}) RETURN u;
+MATCH (c:Comment {id: "<id>"}) RETURN c;
 ```
-👉 L'utilisateur ne devrait plus exister.
+👉 Tu devrais voir le commentaire correspondant !
 
 ---
 
-### 5️⃣ Supprimer un post (DELETE /posts/<post_id>)  
+#### 6️⃣ Mettre à jour un commentaire (PUT /comments/:id)  
 
-#### 📌 Tester avec Postman  
-- **Méthode** : `DELETE`  
-- **URL** : `http://127.0.0.1:5000/posts/abcd-efgh-ijkl`  
+#### 📌 Méthode 1 : Tester avec Postman  
+- **Méthode** : `PUT`  
+- **URL** : `http://127.0.0.1:5000/comments/<id>`  
+- **Body (JSON)** :  
+```json
+{
+  "content": "Commentaire mis à jour"
+}
+```
 - **Réponse attendue (200 OK)** :  
 ```json
 {
-  "message": "Post deleted"
+  "message": "Comment updated",
+  "comment": {
+    "id": "wxyz-1234",
+    "content": "Commentaire mis à jour",
+    "updated_at": "2025-03-31T12:30:00"
+  }
 }
 ```
 
-#### 📌 Vérifier sur Neo4j  
-Exécute dans Neo4j :  
-```cypher
-MATCH (p:Post {id: "abcd-efgh-ijkl"}) RETURN p;
-```
-👉 Le post ne devrait plus exister.
-
----
-
-### 6️⃣ Supprimer un commentaire (DELETE /comments/<comment_id>)  
-
-#### 📌 Tester avec Postman  
-- **Méthode** : `DELETE`  
-- **URL** : `http://127.0.0.1:5000/comments/wxyz-1234`  
-- **Réponse attendue (200 OK)** :  
-```json
-{
-  "message": "Comment deleted"
-}
-```
-
-#### 📌 Vérifier sur Neo4j  
-Exécute dans Neo4j :  
+#### 📌 Méthode 2 : Vérifier sur Neo4j  
+1. Ouvre Neo4j sur [http://localhost:7474](http://localhost:7474)  
+2. Connecte-toi avec `neo4j / password`  
+3. Exécute cette requête Cypher :  
 ```cypher
 MATCH (c:Comment {id: "wxyz-1234"}) RETURN c;
 ```
-👉 Le commentaire ne devrait plus exister.
+👉 Tu devrais voir les informations mises à jour !
+
+---
+
+#### 7️⃣ Supprimer un commentaire (DELETE /comments/:id)  
+
+#### 📌 Méthode 1 : Tester avec Postman  
+- **Méthode** : `DELETE`  
+- **URL** : `http://127.0.0.1:5000/comments/<id>`  
+
+#### 📌 Méthode 2 : Vérifier sur Neo4j  
+1. Ouvre Neo4j sur [http://localhost:7474](http://localhost:7474)  
+2. Connecte-toi avec `neo4j / password`  
+3. Exécute cette requête Cypher :  
+```cypher
+MATCH (c:Comment {id: "<id>"}) DELETE c;
+```
+👉 Le commentaire devrait être supprimé !
+
+---
+
+#### 8️⃣ Ajouter un like à un commentaire (POST /comments/:id/like)  
+
+#### 📌 Méthode 1 : Tester avec Postman  
+- **Méthode** : `POST`  
+- **URL** : `http://127.0.0.1:5000/comments/<id>/like`  
+- **Body (JSON)** :  
+```json
+{
+  "user_id": "1234-5678-abcd"
+}
+```
+- **Réponse attendue (201 Created)** :  
+```json
+{
+  "message": "Like added"
+}
+```
+
+#### 📌 Méthode 2 : Vérifier sur Neo4j  
+1. Ouvre Neo4j sur [http://localhost:7474](http://localhost:7474)  
+2. Connecte-toi avec `neo4j / password`  
+3. Exécute cette requête Cypher :  
+```cypher
+MATCH (u:User {id: "1234-5678-abcd"})-[:LIKES]->(c:Comment {id: "<id>"}) RETURN c;
+```
+👉 Tu devrais voir la relation de like ajoutée !
+
+---
+
+#### 9️⃣ Retirer un like d'un commentaire (DELETE /comments/:id/like)  
+
+#### 📌 Méthode 1 : Tester avec Postman  
+- **Méthode** : `DELETE`  
+- **URL** : `http://127.0.0.1:5000/comments/<id>/like`  
+- **Body (JSON)** :  
+```json
+{
+  "user_id": "1234-5678-abcd"
+}
+```
+- **Réponse attendue (200 OK)** :  
+```json
+{
+  "message": "Like removed"
+}
+```
+
+#### 📌 Méthode 2 : Vérifier sur Neo4j  
+1. Ouvre Neo4j sur [http://localhost:7474](http://localhost:7474)  
+2. Connecte-toi avec `neo4j / password`  
+3. Exécute cette requête Cypher :  
+```cypher
+MATCH (u:User {id: "1234-5678-abcd"})-[r:LIKES]->(c:Comment {id: "<id>"}) DELETE r;
+```
+👉 La relation de like devrait être supprimée !
 
 ---
 
@@ -249,9 +690,18 @@ MATCH (c:Comment {id: "wxyz-1234"}) RETURN c;
 
 | Action                  | Méthode | URL                              | Vérification sur Neo4j          |
 |-------------------------|---------|----------------------------------|---------------------------------|
+| Récupérer la liste des utilisateurs | GET    | `/users`                        | `MATCH (u:User) RETURN u;`     |
 | Créer un utilisateur    | POST    | `/users`                        | `MATCH (u:User) RETURN u;`     |
+| Récupérer un utilisateur par son ID | GET    | `/users/<id>`                   | `MATCH (u:User {id: "<id>"}) RETURN u;` |
+| Mettre à jour un utilisateur par son ID | PUT    | `/users/<id>`                   | `MATCH (u:User {id: "1234-5678-abcd"}) RETURN u;` |
+| Supprimer un utilisateur par son ID | DELETE  | `/users/<id>`                   | `MATCH (u:User {id: "<id>"}) RETURN u;` |
+| Récupérer la liste des amis d'un utilisateur | GET    | `/users/<id>/friends`           | `MATCH (u:User {id: "<id>"})-[:FRIEND]->(f:User) RETURN f;` |
+| Ajouter un ami          | POST    | `/users/<id>/friends`            | `MATCH (u:User {id: "<id>"})-[:FRIEND]->(f:User {id: "friend-id"}) RETURN f;` |
+| Supprimer un ami        | DELETE  | `/users/<id>/friends/<friendId>` | `MATCH (u:User {id: "<id>"})-[r:FRIEND]->(f:User {id: "<friendId>"}) DELETE r;` |
+| Vérifier si deux utilisateurs sont amis | GET    | `/users/<id>/friends/<friendId>` | `MATCH (u:User {id: "<id>"})-[:FRIEND]->(f:User {id: "<friendId>"}) RETURN f;` |
+| Récupérer les amis en commun | GET    | `/users/<id>/mutual-friends/<otherId>` | `MATCH (u:User {id: "<id>"})-[:FRIEND]->(m:User)<-[:FRIEND]-(o:User {id: "<otherId>"}) RETURN m;` |
 | Créer un post           | POST    | `/users/<user_id>/posts`         | `MATCH (p:Post) RETURN p;`     |
 | Ajouter un commentaire  | POST    | `/posts/<post_id>/comments`      | `MATCH (c:Comment) RETURN c;`  |
-| Supprimer un utilisateur| DELETE  | `/users/<user_id>`               | `MATCH (u:User {id: "<id>"}) RETURN u;` |
-| Supprimer un post       | DELETE  | `/posts/<post_id>`               | `MATCH (p:Post {id: "<id>"}) RETURN p;` |
-| Supprimer un commentaire| DELETE  | `/comments/<comment_id>`         | `MATCH (c:Comment {id: "<id>"}) RETURN c;` |
+| Supprimer un utilisateur| DELETE  | `/users/<user_id>`               | `MATCH (u:User {id: "1234-5678-abcd"}) RETURN u;` |
+| Supprimer un post       | DELETE  | `/posts/<post_id>`               | `MATCH (p:Post {id: "abcd-efgh-ijkl"}) RETURN p;` |
+| Supprimer un commentaire| DELETE  | `/comments/<comment_id>`         | `MATCH (c:Comment {id: "wxyz-1234"}) RETURN c;` |
